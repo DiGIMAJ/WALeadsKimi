@@ -6,8 +6,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
+import PublicNavbar from '@/components/PublicNavbar';
+import Footer from '@/components/Footer';
+import SEOHead from '@/components/SEOHead';
 import {
-  Users,
   Mail,
   MessageSquare,
   Send,
@@ -45,22 +47,12 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-[#25D366] rounded-lg flex items-center justify-center">
-                <Users className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold text-gray-900">WALeads</span>
-            </Link>
-            <Link to="/">
-              <Button variant="ghost">← Back to Home</Button>
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <SEOHead
+        title="Contact Us - WALeads"
+        description="Get in touch with the WALeads team. Email contact@waleads.name.ng"
+        path="/contact"
+      />
+      <PublicNavbar showBackButton />
 
       {/* Hero */}
       <section className="bg-gradient-to-b from-[#E8F8EE] to-white py-16 lg:py-24">
@@ -91,10 +83,10 @@ export default function ContactPage() {
                   For general inquiries and support
                 </p>
                 <a 
-                  href="mailto:support@waleads.name.ng"
+                  href="mailto:contact@waleads.name.ng"
                   className="text-[#25D366] hover:underline font-medium"
                 >
-                  support@waleads.name.ng
+                  contact@waleads.name.ng
                 </a>
               </CardContent>
             </Card>
@@ -257,14 +249,7 @@ export default function ContactPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-8">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="text-gray-400">
-            © {new Date().getFullYear()} WALeads. All rights reserved.
-          </p>
-        </div>
-      </footer>
+      <Footer minimal />
     </div>
   );
 }

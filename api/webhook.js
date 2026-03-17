@@ -3,12 +3,12 @@
  * Vercel Serverless Function
  * 
  * Handles Paystack webhook events for payments and subscriptions
+ * Includes referral commission calculation (15% airtime)
  */
 
 const crypto = require('crypto');
 
-// Firebase Admin SDK - initialized without credentials for Vercel
-// You'll need to add FIREBASE_SERVICE_ACCOUNT env var
+// Firebase Admin SDK
 let admin;
 let db;
 
@@ -17,7 +17,6 @@ function initFirebase() {
     admin = require('firebase-admin');
     
     if (!admin.apps.length) {
-      // Check if we have service account credentials
       const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT 
         ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
         : null;
@@ -27,7 +26,6 @@ function initFirebase() {
           credential: admin.credential.cert(serviceAccount)
         });
       } else {
-        // Try to use application default credentials
         admin.initializeApp();
       }
     }
@@ -58,6 +56,62 @@ function getNextResetDate(admin) {
 }
 
 /**
+ * Process referral commission (15% of payment amount)
+ */
+async function processReferralCommission(userId, paymentAmount, transactionType, transactionId, db, admin) {
+  try {
+    const userDoc = await db.collection('users').doc(userId).get();
+    if (!userDoc.exists) return null;
+
+    const userData = userDoc.data();
+    const referrerId = userData.referredBy;
+
+    if (!referrerId) return null;
+
+    const commission = Math.round(paymentAmount * 0.15); // 15% commission
+
+    // Update referrer's earnings
+    await db.collection('users').doc(referrerId).update({
+      referralEarnings: admin.firestore.FieldValue.increment(commission),
+    });
+
+    // Find the referral doc and update its earnings + status
+    const referralsQuery = await db.collection('users').doc(referrerId)
+      .collection('referrals')
+      .where('referredUserId', '==', userId)
+      .limit(1)
+      .get();
+
+    let referralId = null;
+    if (!referralsQuery.empty) {
+      const referralDoc = referralsQuery.docs[0];
+      referralId = referralDoc.id;
+      await referralDoc.ref.update({
+        status: 'active',
+        totalEarnings: admin.firestore.FieldValue.increment(commission),
+      });
+    }
+
+    // Create ReferralEarning document
+    await db.collection('users').doc(referrerId).collection('referralEarnings').add({
+      referralId: referralId,
+      transactionId: transactionId,
+      purchaseAmount: paymentAmount,
+      commission: commission,
+      type: transactionType,
+      status: 'credited',
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    console.log(`Referral commission: ${commission} kobo credited to ${referrerId} from user ${userId}`);
+    return { referrerId, commission };
+  } catch (error) {
+    console.error('Error processing referral commission:', error);
+    return null;
+  }
+}
+
+/**
  * Handle successful charge (one-time payments for top-ups)
  */
 async function handleChargeSuccess(data, db, admin) {
@@ -84,6 +138,8 @@ async function handleChargeSuccess(data, db, admin) {
 
   if (metadata.type === 'topup') {
     const exportsAdded = metadata.exportsAdded || 0;
+    const tierName = metadata.tierName || 'Top-up';
+    const description = metadata.description || `Top-up: ${exportsAdded} credits (${tierName})`;
     
     // Update user topup credits
     await userRef.update({
@@ -91,25 +147,31 @@ async function handleChargeSuccess(data, db, admin) {
     });
     
     // Record transaction
-    await userRef.collection('transactions').add({
+    const txRef = await userRef.collection('transactions').add({
       type: 'topup',
       amount: data.amount / 100,
-      description: metadata.description || `Top-up: ${exportsAdded} credits`,
+      description: description,
       exportsAdded: exportsAdded,
       paystackRef: data.reference,
       status: 'success',
       createdAt: admin.firestore.FieldValue.serverTimestamp()
     });
     
+    // Process referral commission
+    await processReferralCommission(userId, data.amount, 'topup', txRef.id, db, admin);
+    
     console.log(`Top-up successful: ${exportsAdded} credits added to user ${userId}`);
     return { success: true, type: 'topup', exportsAdded };
   }
   
   if (metadata.type === 'subscription') {
-    // Update user to Pro plan
+    const billingCycle = metadata.billingCycle || 'monthly';
+    
+    // Update user to Pro plan with unlimited exports
     await userRef.update({
       plan: 'pro',
-      monthlyExports: 7500,
+      billingCycle: billingCycle,
+      monthlyExports: 999999, // Unlimited
       exportsUsed: 0,
       paystackCustomerId: data.customer?.id?.toString(),
       planStartDate: admin.firestore.FieldValue.serverTimestamp(),
@@ -117,18 +179,21 @@ async function handleChargeSuccess(data, db, admin) {
     });
     
     // Record transaction
-    await userRef.collection('transactions').add({
+    const txRef = await userRef.collection('transactions').add({
       type: 'subscription',
       amount: data.amount / 100,
-      description: 'Pro Plan Subscription',
-      exportsAdded: 7500,
+      description: `Pro Plan Subscription (${billingCycle})`,
+      exportsAdded: 0,
       paystackRef: data.reference,
       status: 'success',
       createdAt: admin.firestore.FieldValue.serverTimestamp()
     });
     
-    console.log(`Subscription successful: User ${userId} upgraded to Pro`);
-    return { success: true, type: 'subscription' };
+    // Process referral commission
+    await processReferralCommission(userId, data.amount, 'subscription', txRef.id, db, admin);
+    
+    console.log(`Subscription successful: User ${userId} upgraded to Pro (${billingCycle})`);
+    return { success: true, type: 'subscription', billingCycle };
   }
   
   return { success: false, reason: 'Unknown type' };
@@ -164,6 +229,7 @@ async function handleSubscriptionCreate(data, db, admin) {
     paystackCustomerId: customer.customer_code,
     paystackSubscriptionCode: data.subscription_code,
     paystackSubscriptionId: data.id?.toString(),
+    monthlyExports: 999999, // Unlimited
     planStartDate: admin.firestore.FieldValue.serverTimestamp(),
     nextReset: getNextResetDate(admin)
   });
@@ -197,22 +263,25 @@ async function handleInvoicePaymentSucceeded(data, db, admin) {
 
   const userDoc = usersSnapshot.docs[0];
   
-  // Reset monthly exports
+  // Reset exports for unlimited
   await userDoc.ref.update({
     exportsUsed: 0,
     nextReset: getNextResetDate(admin)
   });
   
   // Record transaction
-  await userDoc.ref.collection('transactions').add({
+  const txRef = await userDoc.ref.collection('transactions').add({
     type: 'subscription',
     amount: data.amount / 100,
     description: 'Pro Plan Subscription - Renewal',
-    exportsAdded: 7500,
+    exportsAdded: 0,
     paystackRef: data.transaction?.reference || data.reference,
     status: 'success',
     createdAt: admin.firestore.FieldValue.serverTimestamp()
   });
+
+  // Process referral commission for renewal
+  await processReferralCommission(userDoc.id, data.amount, 'subscription', txRef.id, db, admin);
   
   console.log(`Subscription renewed for user: ${userDoc.id}`);
   return { success: true, userId: userDoc.id };
@@ -246,7 +315,8 @@ async function handleSubscriptionDisable(data, db) {
   // Downgrade to free plan
   await userDoc.ref.update({
     plan: 'free',
-    monthlyExports: 25,
+    billingCycle: null,
+    monthlyExports: 50,
     paystackSubscriptionCode: null,
     paystackSubscriptionId: null
   });

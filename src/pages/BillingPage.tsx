@@ -15,18 +15,14 @@ import {
   Loader2,
   AlertTriangle,
 } from 'lucide-react';
-import type { Transaction } from '@/types';
+import type { Transaction, TopUpTier } from '@/types';
+import { TOP_UP_TIERS } from '@/types';
 
 export default function BillingPage() {
   const { user, refreshUser } = useAuth();
   const { purchaseTopUp, subscribeToPro, loading: paystackLoading } = usePaystack();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-
-  useEffect(() => {
-    if (user) {
-      fetchTransactions();
-    }
-  }, [user]);
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
   const fetchTransactions = async () => {
     if (!user) return;
@@ -40,10 +36,10 @@ export default function BillingPage() {
       const snapshot = await getDocs(q);
       const fetchedTransactions: Transaction[] = [];
       
-      snapshot.forEach((doc) => {
-        const data = doc.data();
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
         fetchedTransactions.push({
-          id: doc.id,
+          id: docSnap.id,
           type: data.type,
           amount: data.amount,
           description: data.description,
@@ -60,41 +56,42 @@ export default function BillingPage() {
     }
   };
 
-  const handleTopUp = async (batchCount: number) => {
+  useEffect(() => {
+    if (user) {
+      fetchTransactions();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  const handleTopUp = async (tier: TopUpTier) => {
     purchaseTopUp(
-      batchCount,
+      tier,
       async (reference) => {
-        // On success
         if (!user) return;
         
         try {
-          const exports = batchCount * 200;
-          
-          // Add transaction record
           await addDoc(collection(db, 'users', user.uid, 'transactions'), {
             type: 'topup',
-            amount: batchCount * 250,
-            description: `${batchCount} batch${batchCount > 1 ? 'es' : ''} of 200 credits`,
-            exportsAdded: exports,
+            amount: tier.price,
+            description: `Top-up: ${tier.credits} credits (${tier.name})`,
+            exportsAdded: tier.credits,
             paystackRef: reference,
             status: 'success',
             createdAt: new Date(),
           });
           
-          // Update user credits
           await updateDoc(doc(db, 'users', user.uid), {
-            topupExports: increment(exports),
+            topupExports: increment(tier.credits),
           });
           
           await refreshUser();
           fetchTransactions();
-          toast.success(`Added ${exports} credits to your account!`);
-        } catch (error) {
+          toast.success(`Added ${tier.credits} credits to your account!`);
+        } catch {
           toast.error('Failed to update credits');
         }
       },
       () => {
-        // On cancel
         toast.info('Payment cancelled');
       }
     );
@@ -102,32 +99,34 @@ export default function BillingPage() {
 
   const handleSubscribe = () => {
     subscribeToPro(
+      billingCycle,
       async (reference) => {
         if (!user) return;
         
         try {
-          // Add transaction record
+          const amount = billingCycle === 'yearly' ? 50000 : 5000;
+          
           await addDoc(collection(db, 'users', user.uid, 'transactions'), {
             type: 'subscription',
-            amount: 5000,
-            description: 'Pro Plan Subscription',
-            exportsAdded: 7500,
+            amount,
+            description: `Pro Plan Subscription (${billingCycle})`,
+            exportsAdded: 0,
             paystackRef: reference,
             status: 'success',
             createdAt: new Date(),
           });
           
-          // Update user to pro
           await updateDoc(doc(db, 'users', user.uid), {
             plan: 'pro',
-            monthlyExports: 7500,
+            billingCycle,
+            monthlyExports: 999999,
             exportsUsed: 0,
           });
           
           await refreshUser();
           fetchTransactions();
           toast.success('Welcome to Pro!');
-        } catch (error) {
+        } catch {
           toast.error('Failed to activate subscription');
         }
       },
@@ -137,12 +136,12 @@ export default function BillingPage() {
     );
   };
 
-  const monthlyProgress = user 
+  const monthlyProgress = user && user.plan !== 'pro'
     ? Math.round((user.exportsUsed / user.monthlyExports) * 100) 
     : 0;
 
   const daysUntilReset = user?.nextReset
-    ? Math.ceil((user.nextReset.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    ? Math.ceil((user.nextReset.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
     : 0;
 
   return (
@@ -175,8 +174,8 @@ export default function BillingPage() {
                 </div>
                 <p className={user?.plan === 'pro' ? 'text-gray-300' : 'text-gray-500'}>
                   {user?.plan === 'pro'
-                    ? '7,500 exports per month + all premium features'
-                    : '25 exports per month, CSV export only'}
+                    ? `Unlimited exports + all premium features (${user?.billingCycle || 'monthly'})`
+                    : '50 one-time exports, CSV & VCF export'}
                 </p>
                 {user?.plan === 'pro' && (
                   <p className="text-sm text-gray-300 mt-1">
@@ -187,18 +186,42 @@ export default function BillingPage() {
             </div>
             
             {user?.plan === 'free' && (
-              <Button
-                onClick={handleSubscribe}
-                disabled={paystackLoading}
-                className="bg-[#25D366] hover:bg-[#128C7E] text-white"
-              >
-                {paystackLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : (
-                  <Crown className="w-4 h-4 mr-2" />
-                )}
-                Upgrade to Pro
-              </Button>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2 mb-2">
+                  <button
+                    onClick={() => setBillingCycle('monthly')}
+                    className={`px-3 py-1 text-sm rounded-full transition-colors ${
+                      billingCycle === 'monthly'
+                        ? 'bg-[#25D366] text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    Monthly N5,000
+                  </button>
+                  <button
+                    onClick={() => setBillingCycle('yearly')}
+                    className={`px-3 py-1 text-sm rounded-full transition-colors ${
+                      billingCycle === 'yearly'
+                        ? 'bg-[#25D366] text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    Yearly N50,000
+                  </button>
+                </div>
+                <Button
+                  onClick={handleSubscribe}
+                  disabled={paystackLoading}
+                  className="bg-[#25D366] hover:bg-[#128C7E] text-white"
+                >
+                  {paystackLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : (
+                    <Crown className="w-4 h-4 mr-2" />
+                  )}
+                  Upgrade to Pro
+                </Button>
+              </div>
             )}
           </div>
         </CardContent>
@@ -208,19 +231,32 @@ export default function BillingPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Monthly Credits</CardTitle>
+            <CardTitle className="text-lg">
+              {user?.plan === 'pro' ? 'Plan Status' : 'Free Credits'}
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="mb-4">
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-gray-600">Used</span>
-                <span className="font-medium">{user?.exportsUsed || 0} / {user?.monthlyExports || 25}</span>
+            {user?.plan === 'pro' ? (
+              <div>
+                <div className="text-3xl font-bold text-[#25D366] mb-2">Unlimited</div>
+                <p className="text-sm text-gray-500">
+                  Unlimited exports with your Pro plan. Resets in {daysUntilReset} days.
+                </p>
               </div>
-              <Progress value={monthlyProgress} className="h-3" />
-            </div>
-            <p className="text-sm text-gray-500">
-              Resets every 45 days. Next reset in {daysUntilReset} days.
-            </p>
+            ) : (
+              <div>
+                <div className="mb-4">
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-gray-600">Used</span>
+                    <span className="font-medium">{user?.freeExportsUsed || user?.exportsUsed || 0} / {user?.freeExportsTotal || 50}</span>
+                  </div>
+                  <Progress value={monthlyProgress} className="h-3" />
+                </div>
+                <p className="text-sm text-gray-500">
+                  One-time free credits. Purchase top-ups or upgrade to Pro for more.
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -233,8 +269,14 @@ export default function BillingPage() {
               {user?.topupExports || 0}
             </div>
             <p className="text-sm text-gray-500">
-              These credits never expire and are used after your monthly allowance is depleted.
+              These credits never expire and are used after your {user?.plan === 'pro' ? 'subscription' : 'free'} credits.
             </p>
+            {(user?.topupExports || 0) < 10 && user?.plan === 'free' && (
+              <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start space-x-2">
+                <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-700">Running low on credits! Top up below.</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -249,29 +291,43 @@ export default function BillingPage() {
         </CardHeader>
         <CardContent>
           <p className="text-gray-600 mb-4">
-            Need more credits? Purchase top-ups that never expire. ₦250 for 200 credits.
+            Credits never expire. Bigger packs have bigger discounts!
           </p>
           
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {[
-              { batches: 1, credits: 200, price: 250 },
-              { batches: 5, credits: 1000, price: 1250 },
-              { batches: 10, credits: 2000, price: 2500 },
-            ].map((option) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            {TOP_UP_TIERS.map((tier) => (
               <div
-                key={option.batches}
-                className="border-2 border-gray-100 rounded-xl p-4 hover:border-[#25D366] transition-colors"
+                key={tier.id}
+                className={`relative border-2 rounded-xl p-4 hover:border-[#25D366] transition-colors ${
+                  tier.popular ? 'border-[#25D366] bg-[#E8F8EE]/30' : tier.bestValue ? 'border-purple-300 bg-purple-50/30' : 'border-gray-100'
+                }`}
               >
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900">{option.credits}</div>
-                  <div className="text-sm text-gray-500">credits</div>
-                  <div className="text-lg font-semibold text-[#25D366] mt-2">
-                    ₦{option.price.toLocaleString()}
+                {tier.badge && (
+                  <div className={`absolute -top-2.5 left-1/2 -translate-x-1/2 text-white text-[10px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap ${
+                    tier.popular ? 'bg-[#25D366]' : tier.bestValue ? 'bg-purple-500' : 'bg-gray-700'
+                  }`}>
+                    {tier.badge}
                   </div>
+                )}
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-gray-900">{tier.credits.toLocaleString()}</div>
+                  <div className="text-xs text-gray-500 mb-1">credits</div>
+                  <div className="text-lg font-semibold text-[#25D366]">
+                    N{tier.price.toLocaleString()}
+                  </div>
+                  <div className="text-[10px] text-gray-500">
+                    N{tier.perCredit.toFixed(2)}/credit
+                  </div>
+                  {tier.savings && (
+                    <div className="text-[10px] text-[#25D366] font-medium mt-0.5">
+                      Save {tier.savings}
+                    </div>
+                  )}
                   <Button
-                    onClick={() => handleTopUp(option.batches)}
+                    onClick={() => handleTopUp(tier)}
                     disabled={paystackLoading}
-                    className="w-full mt-4 bg-[#25D366] hover:bg-[#128C7E] text-white"
+                    size="sm"
+                    className="w-full mt-3 bg-[#25D366] hover:bg-[#128C7E] text-white"
                   >
                     {paystackLoading ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -326,7 +382,7 @@ export default function BillingPage() {
                         )}
                       </td>
                       <td className="px-4 py-3 text-sm font-medium">
-                        ₦{tx.amount.toLocaleString()}
+                        N{tx.amount.toLocaleString()}
                       </td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs ${
@@ -349,14 +405,15 @@ export default function BillingPage() {
         </CardContent>
       </Card>
 
-      {/* Credit Expiry Notice */}
-      <div className="mt-6 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start space-x-3">
-        <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+      {/* Credit Info Notice */}
+      <div className="mt-6 bg-[#E8F8EE] border border-[#25D366]/20 rounded-xl p-4 flex items-start space-x-3">
+        <Zap className="w-5 h-5 text-[#25D366] flex-shrink-0 mt-0.5" />
         <div>
-          <h4 className="font-medium text-amber-900">Credit Expiry Notice</h4>
-          <p className="text-sm text-amber-700 mt-1">
-            Monthly credits expire after 45 days from your plan start date. 
-            Top-up credits never expire. Make sure to use your monthly credits before they reset!
+          <h4 className="font-medium text-gray-900">Credits Info</h4>
+          <p className="text-sm text-gray-600 mt-1">
+            {user?.plan === 'pro' 
+              ? 'Pro users get unlimited exports. Top-up credits are preserved and can be used if you downgrade.'
+              : 'Free users get 50 one-time exports. Top-up credits never expire and stack with your free credits. Upgrade to Pro for unlimited exports.'}
           </p>
         </div>
       </div>

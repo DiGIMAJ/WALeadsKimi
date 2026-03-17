@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider, useAuth } from '@/hooks/useAuth';
 import { Toaster } from '@/components/ui/sonner';
 import LandingPage from '@/pages/LandingPage';
@@ -12,6 +13,7 @@ import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage';
 import PricingPage from '@/pages/PricingPage';
 import AboutPage from '@/pages/AboutPage';
 import ContactPage from '@/pages/ContactPage';
+import ReferralPage from '@/pages/ReferralPage';
 import AppLayout from '@/components/AppLayout';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -48,6 +50,7 @@ function AppRoutes() {
         <Route path="upload" element={<UploadPage />} />
         <Route path="contacts" element={<ContactsPage />} />
         <Route path="billing" element={<BillingPage />} />
+        <Route path="referrals" element={<ReferralPage />} />
       </Route>
     </Routes>
   );
@@ -55,12 +58,14 @@ function AppRoutes() {
 
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <AppRoutes />
-        <Toaster position="top-right" />
-      </BrowserRouter>
-    </AuthProvider>
+    <HelmetProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <AppRoutes />
+          <Toaster position="top-right" />
+        </BrowserRouter>
+      </AuthProvider>
+    </HelmetProvider>
   );
 }
 

@@ -162,8 +162,8 @@ export default function PrivacyPolicyPage() {
               <h2 className="text-xl font-bold text-gray-900 mb-4">Contact Us</h2>
               <p className="text-gray-600">
                 If you have any questions about this Privacy Policy, please contact us at{' '}
-                <a href="mailto:support@waleads.name.ng" className="text-[#25D366] hover:underline">
-                  support@waleads.name.ng
+                <a href="mailto:contact@waleads.name.ng" className="text-[#25D366] hover:underline">
+                  contact@waleads.name.ng
                 </a>
               </p>
             </div>
