@@ -12,6 +12,7 @@ import {
   Crown,
   ArrowRight,
   Calendar,
+  Gift,
 } from 'lucide-react';
 import type { Extraction } from '@/types';
 
@@ -268,6 +269,31 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
+      {/* Referral Widget */}
+      <Card className="mb-8">
+        <CardContent className="p-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-start space-x-4">
+              <div className="w-12 h-12 bg-[#E8F8EE] rounded-xl flex items-center justify-center flex-shrink-0">
+                <Gift className="w-6 h-6 text-[#25D366]" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">Earn with Referrals</h3>
+                <p className="text-gray-500 text-sm">
+                  Share WALeads and earn 15% airtime commission on every purchase your referrals make.
+                </p>
+              </div>
+            </div>
+            <Link to="/app/referrals">
+              <Button variant="outline" className="border-[#25D366] text-[#25D366] hover:bg-[#25D366] hover:text-white whitespace-nowrap">
+                View Referrals
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Upgrade Banner (Free users only) */}
       {user?.plan === 'free' && (
         <Card className="bg-[#075E54] text-white">
@@ -280,7 +306,7 @@ export default function Dashboard() {
                 <div>
                   <h3 className="text-lg font-semibold mb-1">Upgrade to Pro</h3>
                   <p className="text-gray-300 text-sm">
-                    Get 7,500 exports/month, VCF & Excel exports, and priority support.
+                    Get unlimited exports, VCF & Excel exports, and priority support.
                   </p>
                 </div>
               </div>

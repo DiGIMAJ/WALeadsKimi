@@ -7,6 +7,7 @@ import {
   Upload,
   Users,
   CreditCard,
+  Gift,
   LogOut,
   Menu,
   X,
@@ -19,6 +20,7 @@ const navItems = [
   { path: '/app/upload', label: 'Upload', icon: Upload },
   { path: '/app/contacts', label: 'Contacts', icon: Users },
   { path: '/app/billing', label: 'Billing', icon: CreditCard },
+  { path: '/app/referrals', label: 'Referrals', icon: Gift },
 ];
 
 export default function AppLayout() {
@@ -32,14 +34,14 @@ export default function AppLayout() {
       await logout();
       toast.success('Logged out successfully');
       navigate('/');
-    } catch (error) {
+    } catch {
       toast.error('Failed to logout');
     }
   };
 
   const remainingExports = user 
-    ? (user.monthlyExports - user.exportsUsed) + user.topupExports 
-    : 0;
+    ? (user.plan === 'pro' ? 'Unlimited' : String((user.monthlyExports - user.exportsUsed) + user.topupExports))
+    : '0';
 
   return (
     <div className="min-h-screen bg-[#F0F2F5]">
@@ -55,7 +57,7 @@ export default function AppLayout() {
           
           <div className="flex items-center space-x-3">
             <div className="bg-[#E8F8EE] text-[#25D366] px-3 py-1 rounded-full text-sm font-medium">
-              {remainingExports} credits
+              {remainingExports === 'Unlimited' ? 'Pro' : `${remainingExports} credits`}
             </div>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -118,12 +120,20 @@ export default function AppLayout() {
           <div className="px-6 pb-4">
             <div className="bg-[#E8F8EE] rounded-xl p-4">
               <div className="text-sm text-gray-600 mb-1">Available Credits</div>
-              <div className="text-2xl font-bold text-[#25D366]">{remainingExports}</div>
-              <div className="text-xs text-gray-500 mt-1">
-                {user?.monthlyExports && (
-                  <>{user.monthlyExports - user.exportsUsed} monthly + {user.topupExports} top-up</>
-                )}
+              <div className="text-2xl font-bold text-[#25D366]">
+                {remainingExports === 'Unlimited' ? 'Unlimited' : remainingExports}
               </div>
+              {user?.plan === 'pro' ? (
+                <div className="text-xs text-gray-500 mt-1">
+                  Unlimited exports (Pro)
+                </div>
+              ) : (
+                <div className="text-xs text-gray-500 mt-1">
+                  {user?.monthlyExports && (
+                    <>{user.monthlyExports - user.exportsUsed} free + {user.topupExports} top-up</>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -161,7 +171,7 @@ export default function AppLayout() {
                   {user?.plan === 'pro' ? (
                     <>
                       <Crown className="w-3 h-3 text-yellow-500" />
-                      <span className="text-xs text-yellow-600">Pro</span>
+                      <span className="text-xs text-yellow-600">Pro{user?.billingCycle === 'yearly' ? ' (Yearly)' : ''}</span>
                     </>
                   ) : (
                     <span className="text-xs text-gray-500">Free</span>
@@ -197,12 +207,12 @@ export default function AppLayout() {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex flex-col items-center py-3 px-4 ${
+                className={`flex flex-col items-center py-3 px-2 min-w-0 ${
                   isActive ? 'text-[#25D366]' : 'text-gray-400'
                 }`}
               >
-                <Icon className="w-6 h-6" />
-                <span className="text-xs mt-1">{item.label}</span>
+                <Icon className="w-5 h-5" />
+                <span className="text-[10px] mt-1 truncate">{item.label}</span>
               </Link>
             );
           })}

@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import SEOHead from '@/components/SEOHead';
 import { Users, Mail, Lock, User, ArrowRight, Loader2 } from 'lucide-react';
 
 export default function AuthPage() {
@@ -13,6 +14,14 @@ export default function AuthPage() {
   const navigate = useNavigate();
   const { user, login, signup, loginWithGoogle, resetPassword } = useAuth();
   const [activeTab, setActiveTab] = useState(searchParams.get('signup') === 'true' ? 'signup' : 'login');
+
+  // Store referral code if present
+  useEffect(() => {
+    const ref = searchParams.get('ref');
+    if (ref) {
+      localStorage.setItem('waleads_ref', ref);
+    }
+  }, [searchParams]);
   
   // Login form
   const [loginEmail, setLoginEmail] = useState('');
@@ -110,6 +119,7 @@ export default function AuthPage() {
   if (showForgotPassword) {
     return (
       <div className="min-h-screen bg-[#F0F2F5] flex items-center justify-center p-4">
+        <SEOHead title="Reset Password - WALeads" description="Reset your WALeads account password." path="/auth" />
         <div className="w-full max-w-md">
           <div className="bg-white rounded-2xl shadow-lg p-8">
             <div className="text-center mb-8">
@@ -165,6 +175,7 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen bg-[#F0F2F5] flex items-center justify-center p-4">
+      <SEOHead title="Log In / Sign Up - WALeads" description="Create your free WALeads account or log in to your existing account." path="/auth" />
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">

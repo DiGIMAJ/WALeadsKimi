@@ -1,13 +1,18 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import PublicNavbar from '@/components/PublicNavbar';
+import Footer from '@/components/Footer';
+import SEOHead from '@/components/SEOHead';
 import {
   Upload,
   FileSpreadsheet,
   ArrowRight,
-  Users,
   Check,
-  Smartphone,
   MessageCircle,
+  Users,
+  CreditCard,
+  Gift,
+  Star,
 } from 'lucide-react';
 
 const steps = [
@@ -17,7 +22,7 @@ const steps = [
     description: 'Open any WhatsApp group or individual chat that contains the contacts you want to extract.',
     details: [
       'Open the WhatsApp group or chat',
-      'Tap the three dots menu (⋮) in the top right',
+      'Tap the three dots menu in the top right',
       'Select "More" from the dropdown',
       'Tap "Export chat"',
       'Choose "Without media" (this creates a smaller file)',
@@ -39,17 +44,56 @@ const steps = [
     tip: 'All processing happens in your browser. Your chat data never leaves your device!',
   },
   {
-    icon: <FileSpreadsheet className="w-8 h-8" />,
-    title: 'Export and Use',
-    description: 'Save the contacts to your account and export in your preferred format.',
+    icon: <Users className="w-8 h-8" />,
+    title: 'Manage Contacts',
+    description: 'Organize your extracted contacts with tags, names, and groups.',
     details: [
-      'Review the preview of extracted contacts',
-      'Click "Confirm & Save" to save contacts',
-      'Go to the Contacts page to view all saved contacts',
-      'Export as CSV, VCF (Pro), or Excel (Pro)',
-      'Import into your CRM, email tool, or phone contacts',
+      'Add custom tags to categorize contacts',
+      'Edit contact names for easy identification',
+      'Use search and filters to find specific contacts',
+      'View contacts by country or source file',
+      'Delete duplicates or unwanted contacts',
     ],
-    tip: 'CSV exports are free! VCF and Excel exports cost 5 credits each (Pro plan only).',
+    tip: 'Tags help you organize contacts from different groups. Use them to track where contacts came from.',
+  },
+  {
+    icon: <FileSpreadsheet className="w-8 h-8" />,
+    title: 'Export Contacts',
+    description: 'Save contacts in your preferred format for use anywhere.',
+    details: [
+      'CSV export - works with all spreadsheet apps (all users)',
+      'VCF export - import directly to your phone contacts (all users)',
+      'Excel export - formatted spreadsheet with all details (Pro only)',
+      'Select specific contacts or export all at once',
+      'Import into your CRM, email tool, or phone',
+    ],
+    tip: 'VCF files can be imported directly into your phone contacts app. CSV works great for CRMs and email tools.',
+  },
+  {
+    icon: <CreditCard className="w-8 h-8" />,
+    title: 'Top-up Credits',
+    description: 'Need more exports? Purchase credit packs with volume discounts.',
+    details: [
+      'Free users get 50 one-time exports to start',
+      'Purchase top-up credits that never expire',
+      'Volume discounts: save up to 60% on larger packs',
+      'Credits from N500 (200 credits) to N5,000 (5,000 credits)',
+      'Or upgrade to Pro for unlimited exports',
+    ],
+    tip: 'Top-up credits never expire. Buy in bulk to save more per credit!',
+  },
+  {
+    icon: <Gift className="w-8 h-8" />,
+    title: 'Referral Program',
+    description: 'Earn 15% airtime commission by sharing WALeads.',
+    details: [
+      'Find your unique referral link in the Referrals tab',
+      'Share it with friends, colleagues, or your network',
+      'When they sign up using your link and make a purchase',
+      'You earn 15% commission on every purchase they make',
+      'No limits on how much you can earn',
+    ],
+    tip: 'The referral commission applies to all purchases - subscriptions and top-ups alike!',
   },
 ];
 
@@ -79,22 +123,13 @@ const faqs = [
 export default function HowToUsePage() {
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-[#25D366] rounded-lg flex items-center justify-center">
-                <Users className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold text-gray-900">WALeads</span>
-            </Link>
-            <Link to="/">
-              <Button variant="ghost">← Back to Home</Button>
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <SEOHead
+        title="How to Use WALeads - Step by Step Guide"
+        description="Learn how to extract WhatsApp contacts in simple steps. No technical skills required. Export as CSV, VCF, or Excel."
+        path="/how-to-use"
+      />
+
+      <PublicNavbar showBackButton />
 
       {/* Hero */}
       <section className="bg-gradient-to-b from-[#E8F8EE] to-white py-16 lg:py-24">
@@ -103,7 +138,7 @@ export default function HowToUsePage() {
             How to Use <span className="text-[#25D366]">WALeads</span>
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Extract WhatsApp contacts in three simple steps. No technical skills required.
+            Extract WhatsApp contacts in simple steps. No technical skills required.
           </p>
         </div>
       </section>
@@ -145,7 +180,7 @@ export default function HowToUsePage() {
                     </div>
 
                     <div className="bg-[#E8F8EE] rounded-xl p-4 flex items-start">
-                      <Smartphone className="w-5 h-5 text-[#25D366] mr-3 flex-shrink-0 mt-0.5" />
+                      <Star className="w-5 h-5 text-[#25D366] mr-3 flex-shrink-0 mt-0.5" />
                       <p className="text-sm text-gray-700">
                         <span className="font-medium">Pro Tip:</span> {step.tip}
                       </p>
@@ -203,7 +238,7 @@ export default function HowToUsePage() {
             Ready to Get Started?
           </h2>
           <p className="text-gray-300 mb-8">
-            Sign up now and get 25 free exports to try out WALeads.
+            Sign up now and get 50 free exports to try out WALeads.
           </p>
           <Link to="/auth?signup=true">
             <Button size="lg" className="bg-[#25D366] hover:bg-[#128C7E] text-white rounded-full px-8">
@@ -214,14 +249,7 @@ export default function HowToUsePage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-8">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="text-gray-400">
-            © {new Date().getFullYear()} WALeads. All rights reserved.
-          </p>
-        </div>
-      </footer>
+      <Footer minimal />
     </div>
   );
 }

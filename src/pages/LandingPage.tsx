@@ -1,6 +1,9 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import PublicNavbar from '@/components/PublicNavbar';
+import Footer from '@/components/Footer';
+import SEOHead from '@/components/SEOHead';
 import {
   Upload,
   Download,
@@ -13,8 +16,7 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
-  Menu,
-  X,
+  Gift,
 } from 'lucide-react';
 
 const features = [
@@ -61,108 +63,63 @@ const faqs = [
   },
   {
     question: 'What export formats are available?',
-    answer: 'Free users can export as CSV. Pro users get additional VCF format (for importing to phone contacts) and Excel (.xlsx) format.',
+    answer: 'All users can export as CSV and VCF. Pro users get additional Excel (.xlsx) format, plus unlimited exports.',
   },
   {
-    question: 'Do my exports expire?',
-    answer: 'Monthly exports reset every 45 days. Top-up exports never expire and roll over indefinitely until used.',
+    question: 'Do my credits expire?',
+    answer: 'Free users get 50 one-time exports that never expire. Top-up credits also never expire. Pro users get unlimited exports.',
   },
   {
     question: 'Can I cancel my Pro subscription anytime?',
     answer: 'Yes! You can cancel anytime. You\'ll continue to have Pro access until the end of your current billing period.',
   },
   {
-    question: 'How does the top-up system work?',
-    answer: 'When you run out of monthly exports, you can purchase top-up credits. These credits never expire and are used only after your monthly allowance is depleted.',
+    question: 'How does the referral program work?',
+    answer: 'Share your unique referral link with friends. When they sign up and make any purchase, you earn 15% airtime commission on every purchase they make. There\'s no limit to how much you can earn!',
   },
 ];
 
 export default function LandingPage() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [searchParams] = useSearchParams();
+  const [billingToggle, setBillingToggle] = useState<'monthly' | 'yearly'>('monthly');
+
+  // Store referral code if present
+  useEffect(() => {
+    const ref = searchParams.get('ref');
+    if (ref) {
+      localStorage.setItem('waleads_ref', ref);
+    }
+  }, [searchParams]);
+
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'WALeads',
+    applicationCategory: 'UtilityApplication',
+    operatingSystem: 'Web',
+    description: 'Extract WhatsApp contacts instantly. 100% browser-based.',
+    offers: [
+      { '@type': 'Offer', price: '0', priceCurrency: 'NGN', name: 'Free Plan' },
+      { '@type': 'Offer', price: '5000', priceCurrency: 'NGN', name: 'Pro Monthly' },
+      { '@type': 'Offer', price: '50000', priceCurrency: 'NGN', name: 'Pro Yearly' },
+    ],
+  };
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-[#25D366] rounded-lg flex items-center justify-center">
-                <Users className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold text-gray-900">WALeads</span>
-            </Link>
+      <SEOHead
+        title="WALeads - Extract WhatsApp Contacts Instantly | Free Tool"
+        description="Extract phone numbers from WhatsApp group exports in seconds. 100% browser-based, private, and instant. Get 50 free exports. Export as CSV, VCF, or Excel."
+        path="/"
+      />
 
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-8">
-              <Link to="/how-to-use" className="text-gray-600 hover:text-[#25D366] transition-colors">
-                How It Works
-              </Link>
-              <Link to="/pricing" className="text-gray-600 hover:text-[#25D366] transition-colors">
-                Pricing
-              </Link>
-              <Link to="/about" className="text-gray-600 hover:text-[#25D366] transition-colors">
-                About
-              </Link>
-              <Link to="/contact" className="text-gray-600 hover:text-[#25D366] transition-colors">
-                Contact
-              </Link>
-            </div>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
 
-            <div className="hidden md:flex items-center space-x-4">
-              <Link to="/auth">
-                <Button variant="ghost" className="text-gray-600 hover:text-[#25D366]">
-                  Log In
-                </Button>
-              </Link>
-              <Link to="/auth?signup=true">
-                <Button className="bg-[#25D366] hover:bg-[#128C7E] text-white rounded-full px-6">
-                  Get Started
-                </Button>
-              </Link>
-            </div>
-
-            {/* Mobile menu button */}
-            <button
-              className="md:hidden p-2"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Navigation */}
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-white border-t border-gray-100 py-4">
-            <div className="px-4 space-y-3">
-              <Link to="/how-to-use" className="block py-2 text-gray-600" onClick={() => setMobileMenuOpen(false)}>
-                How It Works
-              </Link>
-              <Link to="/pricing" className="block py-2 text-gray-600" onClick={() => setMobileMenuOpen(false)}>
-                Pricing
-              </Link>
-              <Link to="/about" className="block py-2 text-gray-600" onClick={() => setMobileMenuOpen(false)}>
-                About
-              </Link>
-              <Link to="/contact" className="block py-2 text-gray-600" onClick={() => setMobileMenuOpen(false)}>
-                Contact
-              </Link>
-              <div className="pt-4 space-y-2">
-                <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="outline" className="w-full">Log In</Button>
-                </Link>
-                <Link to="/auth?signup=true" onClick={() => setMobileMenuOpen(false)}>
-                  <Button className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white">
-                    Get Started
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        )}
-      </nav>
+      <PublicNavbar />
 
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-b from-[#E8F8EE] to-white py-20 lg:py-32">
@@ -179,7 +136,7 @@ export default function LandingPage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/auth?signup=true">
                 <Button size="lg" className="bg-[#25D366] hover:bg-[#128C7E] text-white rounded-full px-8 py-6 text-lg">
-                  Start Free
+                  Start Free - 50 Exports
                 </Button>
               </Link>
               <Link to="/how-to-use">
@@ -231,8 +188,8 @@ export default function LandingPage() {
               <div className="w-12 h-12 bg-[#E8F8EE] rounded-full flex items-center justify-center mb-3">
                 <Users className="w-6 h-6 text-[#25D366]" />
               </div>
-              <h3 className="font-semibold text-gray-900">25 Free Exports</h3>
-              <p className="text-sm text-gray-500">Get started with 25 free contacts</p>
+              <h3 className="font-semibold text-gray-900">50 Free Exports</h3>
+              <p className="text-sm text-gray-500">Get started with 50 free contacts</p>
             </div>
             <div className="flex flex-col items-center">
               <div className="w-12 h-12 bg-[#E8F8EE] rounded-full flex items-center justify-center mb-3">
@@ -279,7 +236,7 @@ export default function LandingPage() {
               },
             ].map((item, index) => (
               <div key={index} className="relative">
-                <div className="bg-[#F0F2F5] rounded-2xl p-8 h-full">
+                <div className="bg-[#F0F2F5] rounded-2xl p-8 h-full hover:shadow-md transition-shadow">
                   <div className="text-5xl font-bold text-[#25D366]/20 mb-4">
                     {item.step}
                   </div>
@@ -332,32 +289,57 @@ export default function LandingPage() {
       {/* Pricing Section */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               Simple, Transparent Pricing
             </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
+            <p className="text-gray-600 max-w-2xl mx-auto mb-8">
               Choose the plan that works for you. Start free, upgrade when you need more.
             </p>
+
+            {/* Billing Toggle */}
+            <div className="flex items-center justify-center gap-3 mb-8">
+              <span className={`text-sm font-medium ${billingToggle === 'monthly' ? 'text-gray-900' : 'text-gray-400'}`}>
+                Monthly
+              </span>
+              <button
+                onClick={() => setBillingToggle(billingToggle === 'monthly' ? 'yearly' : 'monthly')}
+                className={`relative w-14 h-7 rounded-full transition-colors ${
+                  billingToggle === 'yearly' ? 'bg-[#25D366]' : 'bg-gray-300'
+                }`}
+              >
+                <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform ${
+                  billingToggle === 'yearly' ? 'translate-x-7' : 'translate-x-0.5'
+                }`} />
+              </button>
+              <span className={`text-sm font-medium ${billingToggle === 'yearly' ? 'text-gray-900' : 'text-gray-400'}`}>
+                Yearly
+              </span>
+              {billingToggle === 'yearly' && (
+                <span className="bg-[#E8F8EE] text-[#25D366] text-xs font-medium px-2 py-1 rounded-full">
+                  Save 17%
+                </span>
+              )}
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {/* Free Plan */}
             <div className="bg-[#F0F2F5] rounded-2xl p-8">
               <div className="text-sm font-medium text-gray-500 mb-2">Free Plan</div>
               <div className="text-4xl font-bold text-gray-900 mb-4">
-                ₦0<span className="text-lg font-normal text-gray-500">/month</span>
+                N0<span className="text-lg font-normal text-gray-500"> one-time</span>
               </div>
               <p className="text-gray-600 mb-6">Perfect for trying out WALeads</p>
               
               <ul className="space-y-3 mb-8">
                 {[
-                  '25 exports per month',
-                  'CSV export only',
+                  '50 one-time free exports',
+                  'CSV & VCF export',
                   'Single file upload',
-                  'Last 5 extractions history',
                   'Auto deduplication',
                   'Country detection',
+                  'Basic support',
                 ].map((feature, i) => (
                   <li key={i} className="flex items-center text-sm text-gray-600">
                     <Check className="w-4 h-4 text-[#25D366] mr-2 flex-shrink-0" />
@@ -380,13 +362,16 @@ export default function LandingPage() {
               </div>
               <div className="text-sm font-medium text-gray-300 mb-2">Pro Plan</div>
               <div className="text-4xl font-bold mb-4">
-                ₦5,000<span className="text-lg font-normal text-gray-300">/month</span>
+                N{billingToggle === 'yearly' ? '50,000' : '5,000'}
+                <span className="text-lg font-normal text-gray-300">
+                  /{billingToggle === 'yearly' ? 'year' : 'month'}
+                </span>
               </div>
               <p className="text-gray-300 mb-6">For power users and businesses</p>
               
               <ul className="space-y-3 mb-8">
                 {[
-                  '7,500 exports per month',
+                  'Unlimited exports',
                   'CSV, VCF & Excel exports',
                   'Multiple file uploads',
                   'Full extraction history',
@@ -406,30 +391,60 @@ export default function LandingPage() {
                 </Button>
               </Link>
             </div>
-          </div>
 
-          {/* Top-up Section */}
-          <div className="mt-12 bg-[#E8F8EE] rounded-2xl p-8 max-w-4xl mx-auto">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  Need More Exports?
-                </h3>
-                <p className="text-gray-600">
-                  Purchase top-up credits that never expire. Use them anytime you need extra exports.
-                </p>
+            {/* Top-up Preview */}
+            <div className="bg-[#E8F8EE] rounded-2xl p-8">
+              <div className="text-sm font-medium text-gray-500 mb-2">Top-up Credits</div>
+              <div className="text-4xl font-bold text-[#25D366] mb-4">
+                From N1<span className="text-lg font-normal text-gray-500">/credit</span>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-[#25D366]">₦250</div>
-                  <div className="text-sm text-gray-600">for 200 credits</div>
-                </div>
-                <Link to="/auth?signup=true">
-                  <Button className="bg-[#25D366] hover:bg-[#128C7E] text-white rounded-full">
-                    Buy Credits
-                  </Button>
-                </Link>
-              </div>
+              <p className="text-gray-600 mb-6">Credits that never expire</p>
+              
+              <ul className="space-y-3 mb-8">
+                {[
+                  '200 credits from N500',
+                  '500 credits from N1,000',
+                  '1,000 credits from N1,500',
+                  'Volume discounts up to 60%',
+                  'Credits never expire',
+                  'Use anytime',
+                ].map((feature, i) => (
+                  <li key={i} className="flex items-center text-sm text-gray-600">
+                    <Check className="w-4 h-4 text-[#25D366] mr-2 flex-shrink-0" />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+
+              <Link to="/pricing">
+                <Button variant="outline" className="w-full rounded-full border-[#25D366] text-[#25D366] hover:bg-[#25D366] hover:text-white">
+                  See All Options
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Referral CTA */}
+      <section className="py-16 bg-gradient-to-r from-purple-50 to-[#E8F8EE]">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center gap-8">
+            <div className="w-20 h-20 bg-[#25D366] rounded-2xl flex items-center justify-center flex-shrink-0">
+              <Gift className="w-10 h-10 text-white" />
+            </div>
+            <div className="text-center md:text-left flex-1">
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+                Earn While You Share
+              </h2>
+              <p className="text-gray-600 mb-4">
+                Share WALeads with your network and earn 15% airtime commission on every purchase your referrals make. No limits on earnings!
+              </p>
+              <Link to="/auth?signup=true">
+                <Button className="bg-[#25D366] hover:bg-[#128C7E] text-white rounded-full px-8">
+                  Sign Up & Get Your Referral Link
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -481,60 +496,14 @@ export default function LandingPage() {
             </p>
             <Link to="/auth?signup=true">
               <Button size="lg" className="bg-white text-[#25D366] hover:bg-gray-100 rounded-full px-8 py-6 text-lg font-semibold">
-                Get Started Free
+                Get Started Free - 50 Exports
               </Button>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="w-8 h-8 bg-[#25D366] rounded-lg flex items-center justify-center">
-                  <Users className="w-5 h-5 text-white" />
-                </div>
-                <span className="text-xl font-bold">WALeads</span>
-              </div>
-              <p className="text-gray-400 text-sm">
-                Extract WhatsApp contacts instantly. 100% browser-based and private.
-              </p>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold mb-4">Product</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li><Link to="/how-to-use" className="hover:text-white">How It Works</Link></li>
-                <li><Link to="/pricing" className="hover:text-white">Pricing</Link></li>
-                <li><Link to="/app" className="hover:text-white">Dashboard</Link></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold mb-4">Company</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li><Link to="/about" className="hover:text-white">About</Link></li>
-                <li><Link to="/contact" className="hover:text-white">Contact</Link></li>
-                <li><Link to="/privacy-policy" className="hover:text-white">Privacy Policy</Link></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold mb-4">Support</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="mailto:support@waleads.name.ng" className="hover:text-white">support@waleads.name.ng</a></li>
-              </ul>
-            </div>
-          </div>
-          
-          <div className="border-t border-gray-800 pt-8 text-center text-sm text-gray-400">
-            © {new Date().getFullYear()} WALeads. All rights reserved.
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

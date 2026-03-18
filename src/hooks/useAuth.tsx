@@ -9,7 +9,7 @@ import {
   updateProfile,
   type User as FirebaseUser
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, serverTimestamp, collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import { auth, db, googleProvider } from '@/lib/firebase';
 import type { User } from '@/types';
 
@@ -27,6 +27,15 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function generateReferralCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  let code = '';
+  for (let i = 0; i < 8; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
@@ -39,16 +48,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!userSnap.exists()) {
       const now = new Date();
       const nextReset = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-      
+      const referralCode = generateReferralCode();
+
+      // Check for referral code in localStorage
+      const storedRefCode = localStorage.getItem('waleads_ref');
+      let referredBy: string | undefined;
+
+      if (storedRefCode) {
+        try {
+          const refQuery = query(
+            collection(db, 'users'),
+            where('referralCode', '==', storedRefCode)
+          );
+          const refSnap = await getDocs(refQuery);
+          if (!refSnap.empty) {
+            const referrerDoc = refSnap.docs[0];
+            referredBy = referrerDoc.id;
+
+            // Create referral document under referrer
+            await addDoc(collection(db, 'users', referrerDoc.id, 'referrals'), {
+              referrerId: referrerDoc.id,
+              referredUserId: firebaseUser.uid,
+              referredUserName: name || firebaseUser.displayName || 'User',
+              status: 'pending',
+              totalEarnings: 0,
+              createdAt: serverTimestamp(),
+            });
+          }
+        } catch (error) {
+          console.error('Error processing referral:', error);
+        }
+        localStorage.removeItem('waleads_ref');
+      }
+
       const userData: Omit<User, 'uid'> = {
         name: name || firebaseUser.displayName || 'User',
         email: firebaseUser.email || '',
         plan: 'free',
-        monthlyExports: 25,
+        monthlyExports: 50,
         exportsUsed: 0,
         topupExports: 0,
+        freeExportsTotal: 50,
+        freeExportsUsed: 0,
         planStartDate: now,
         nextReset: nextReset,
+        referralCode,
+        referredBy,
+        referralEarnings: 0,
+        referralCount: 0,
         createdAt: now,
       };
 
