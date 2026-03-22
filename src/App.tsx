@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
-import { AuthProvider, useAuth } from '@/hooks/useAuth';
+import { useAuth, AuthProvider } from '@/hooks/useAuth';
 import { Toaster } from '@/components/ui/sonner';
 import LandingPage from '@/pages/LandingPage';
 import AuthPage from '@/pages/AuthPage';
@@ -15,10 +15,10 @@ import AboutPage from '@/pages/AboutPage';
 import ContactPage from '@/pages/ContactPage';
 import ReferralPage from '@/pages/ReferralPage';
 import AppLayout from '@/components/AppLayout';
+import FreeToolPage from '@/pages/FreeToolPage';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -26,7 +26,6 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  
   return user ? <>{children}</> : <Navigate to="/auth" />;
 }
 
@@ -34,13 +33,14 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/free-tool" element={<FreeToolPage />} />
       <Route path="/auth" element={<AuthPage />} />
       <Route path="/how-to-use" element={<HowToUsePage />} />
       <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
       <Route path="/pricing" element={<PricingPage />} />
       <Route path="/about" element={<AboutPage />} />
       <Route path="/contact" element={<ContactPage />} />
-      
+
       <Route path="/app" element={
         <PrivateRoute>
           <AppLayout />
