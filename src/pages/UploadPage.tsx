@@ -2,17 +2,18 @@ import { useState } from "react";
 import { ShareWALeadsButton } from "../components/ShareWALeadsButton";
 
 function UploadPage() {
-  const [, setChatText] = useState("");
+  // Use state if needed, otherwise remove
+  const [, _setChatText] = useState("");
 
-  // Add group name detection logic:
+  // Add group name detection logic if needed
   const detectGroupName = (text: string): string => {
     const groupNameRegex = /Subject:\s*(.*)|Group:\s*(.*)|to\s*([^:]+):/i;
     const match = text.match(groupNameRegex);
     return match ? match[1] || match[2] || match[3] || "WhatsApp Contacts" : "WhatsApp Contacts";
   };
 
-  const groupName = detectGroupName("");
   // Use groupName if needed
+  // const groupName = detectGroupName("");
 
   return (
     <div className="max-w-6xl mx-auto p-4">
