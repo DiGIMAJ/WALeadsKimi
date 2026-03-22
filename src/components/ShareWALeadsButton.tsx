@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/components/ui/sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { doc, updateDoc, increment, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";

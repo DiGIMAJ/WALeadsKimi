@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/components/ui/sonner";
 import { useAuth } from "@/hooks/useAuth";
 
 export function HollatagsButton({ phoneNumbers }: { phoneNumbers: string[] }) {
