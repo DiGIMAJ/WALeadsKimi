@@ -1,4 +1,6 @@
-// ... (existing Dashboard imports and setup)
+import { useState, useEffect } from "react";
+import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
 
 function Dashboard() {
   const { user } = useAuth();
@@ -11,7 +13,7 @@ function Dashboard() {
     }
   }, [user]);
 
-  const daysLeft = topupExpiry ? Math.ceil((topupExpiry - new Date()) / (1000 * 60 * 60 * 24)) : 0;
+  const daysLeft = topupExpiry ? Math.ceil((topupExpiry.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0;
 
   return (
     <div className="max-w-6xl mx-auto p-4">

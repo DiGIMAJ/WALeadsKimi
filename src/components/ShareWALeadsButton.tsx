@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { doc, updateDoc, increment, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
-export function ShareWALeadsButton({ contactId }: { contactId: string }) {
+export function ShareWALeadsButton() {
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -19,7 +19,7 @@ export function ShareWALeadsButton({ contactId }: { contactId: string }) {
       const userData = userDoc.data();
       const lastShared = userData?.lastSharedAt?.toDate();
       const now = new Date();
-      const hoursSinceLastShare = lastShared ? (now - lastShared) / (1000 * 60 * 60) : 0;
+      const hoursSinceLastShare = lastShared ? (now.getTime() - lastShared.getTime()) / (1000 * 60 * 60) : 0;
 
       if (hoursSinceLastShare < 24) {
         toast({ title: "Wait a bit!", description: "You can share again in 24 hours." });
