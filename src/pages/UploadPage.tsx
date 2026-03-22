@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ShareWALeadsButton } from "../components/ShareWALeadsButton";
 
 function UploadPage() {
-  const [chatText, setChatText] = useState("");
+  const [, setChatText] = useState("");
 
   // Add group name detection logic:
   const detectGroupName = (text: string): string => {
@@ -11,8 +11,8 @@ function UploadPage() {
     return match ? match[1] || match[2] || match[3] || "WhatsApp Contacts" : "WhatsApp Contacts";
   };
 
-  const groupName = detectGroupName(chatText);
-  const vcfFilename = `${groupName}.vcf`;
+  const groupName = detectGroupName("");
+  // Use groupName if needed
 
   return (
     <div className="max-w-6xl mx-auto p-4">

@@ -1,16 +1,15 @@
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { doc, updateDoc, increment, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export function ShareWALeadsButton() {
   const { user } = useAuth();
-  const { toast } = useToast();
 
   const handleShare = async () => {
     if (!user) {
-      toast({ title: "Error", description: "Please log in first." });
+      toast.error("Please log in first.");
       return;
     }
 
@@ -22,7 +21,7 @@ export function ShareWALeadsButton() {
       const hoursSinceLastShare = lastShared ? (now.getTime() - lastShared.getTime()) / (1000 * 60 * 60) : 0;
 
       if (hoursSinceLastShare < 24) {
-        toast({ title: "Wait a bit!", description: "You can share again in 24 hours." });
+        toast.warning("You can share again in 24 hours.");
         return;
       }
 
@@ -34,9 +33,9 @@ export function ShareWALeadsButton() {
       const shareUrl = `https://wa.me/?text=Check out WALeadsKimi! Export WhatsApp contacts easily: https://waleadskimi.vercel.app`;
       window.open(shareUrl, "_blank");
 
-      toast({ title: "🎉 5 credits added!", description: "Thanks for sharing WALeadsKimi!" });
+      toast.success("🎉 5 credits added! Thanks for sharing WALeadsKimi!");
     } catch (error) {
-      toast({ title: "Error", description: "Failed to add credits. Please try again.", variant: "destructive" });
+      toast.error("Failed to add credits. Please try again.");
     }
   };
 

@@ -3,8 +3,7 @@ import { Button } from "@/components/ui/button";
 import { HollatagsButton } from "../components/HollatagsButton";
 
 function ContactsPage() {
-  const [selectedContacts, setSelectedContacts] = useState<any[]>([]);
-  const vcfContent = "VCF content here"; // Replace with actual logic
+  const [selectedContacts] = useState<any[]>([]);
 
   return (
     <div className="max-w-6xl mx-auto p-4">
@@ -13,7 +12,7 @@ function ContactsPage() {
       <div className="flex gap-2">
         <Button
           onClick={() => {
-            const vcfBlob = new Blob([vcfContent], { type: "text/vcard" });
+            const vcfBlob = new Blob(["VCF content here"], { type: "text/vcard" });
             const vcfUrl = URL.createObjectURL(vcfBlob);
             window.open(vcfUrl, "_blank");
           }}

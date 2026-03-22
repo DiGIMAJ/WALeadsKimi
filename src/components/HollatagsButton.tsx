@@ -1,18 +1,13 @@
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 
 export function HollatagsButton({ phoneNumbers }: { phoneNumbers: string[] }) {
-  const { toast } = useToast();
   const { user } = useAuth();
 
   const sendSMS = async () => {
     if (!user) {
-      toast({
-        title: "Error",
-        description: "Please log in first.",
-        variant: "destructive",
-      });
+      toast.error("Please log in first.");
       return;
     }
 
@@ -22,11 +17,7 @@ export function HollatagsButton({ phoneNumbers }: { phoneNumbers: string[] }) {
       const sender = import.meta.env.VITE_HOLLATAGS_SENDER;
 
       if (!username || !password || !sender) {
-        toast({
-          title: "Error",
-          description: "Hollatags credentials not configured.",
-          variant: "destructive",
-        });
+        toast.error("Hollatags credentials not configured.");
         return;
       }
 
@@ -50,19 +41,12 @@ export function HollatagsButton({ phoneNumbers }: { phoneNumbers: string[] }) {
 
       const result = await response.text();
       if (result.includes("SUCCESS")) {
-        toast({
-          title: "SMS Sent!",
-          description: `Message delivered to ${phoneNumbers.length} contacts.`,
-        });
+        toast.success(`Message delivered to ${phoneNumbers.length} contacts.`);
       } else {
         throw new Error(result);
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: `Failed to send SMS: ${error instanceof Error ? error.message : "Unknown error"}`,
-        variant: "destructive",
-      });
+      toast.error(`Failed to send SMS: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   };
 

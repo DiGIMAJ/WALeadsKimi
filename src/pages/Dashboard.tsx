@@ -15,7 +15,7 @@ function Dashboard() {
   useEffect(() => {
     if (user) {
       const expiry = (user as UserWithTopupExpiry).topupExpiry?.toDate();
-      setTopupExpiry(expiry);
+      setTopupExpiry(expiry ?? null);
     }
   }, [user]);
 
