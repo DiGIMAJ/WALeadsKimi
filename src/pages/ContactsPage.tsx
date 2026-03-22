@@ -25,7 +25,6 @@ function ContactsPage() {
       </div>
 
       {/* Rest of your ContactsPage UI */}
-      {/* ... */}
     </div>
   );
 }

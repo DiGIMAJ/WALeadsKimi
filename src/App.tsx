@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
-import { AuthProvider } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { Toaster } from '@/components/ui/sonner';
 import LandingPage from '@/pages/LandingPage';
 import AuthPage from '@/pages/AuthPage';
